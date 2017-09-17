@@ -1,0 +1,54 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+  - name: install packages
+    apt: name={{item}} state=latest update_cache=yes
+    with_items:
+      - build-essential
+      - htop
+      - libreadline-dev
+      - python-dev
+      - python-pip
+      - tree
+      - vim
+  - name: Download Anaconda Installer
+    get_url:
+      url: https://repo.continuum.io/archive/Anaconda2-4.4.0-Linux-x86_64.sh
+      dest: /tmp/anaconda.sh
+      mode: 0755
+  - name: Set Anaconda script to executable
+    file:
+      path: /tmp/anaconda.sh
+      mode: 0755
+  - name: Install pexpect pip library
+    pip:
+      name: pexpect
+  - name: Install Anaconda
+    expect:
+      command: bash /tmp/anaconda.sh
+      creates: /home/ubuntu/anaconda3
+      timeout: 600
+      responses:
+        'Please, press ENTER to continue': '\n'
+        'IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE': 'q'
+        'Do you approve the license terms\? \[yes\|no\]': 'yes'
+        'Or specify a different location below': '/home/ubuntu/anaconda3'
+        'to PATH in your \/root\/\.bashrc \? \[yes\|no\]': '/home/ubuntu/.bashrc'
+  - name: Set Ubuntu as the owner
+    file:
+      path: /home/ubuntu/anaconda3
+      state: directory
+      mode: 0755
+      owner: ubuntu
+      group: ubuntu
+      recurse: yes
+  - name: Add to PATH in .bashrc
+    lineinfile:
+      name: /home/ubuntu/.bashrc
+      regexp: 'export PATH=\"\/home\/ubuntu\/anaconda3\/bin:\$PATH\"'
+      line: 'export PATH="/home/ubuntu/anaconda3/bin:$PATH"'
+
+
+
+
